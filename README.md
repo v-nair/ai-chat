@@ -1,29 +1,60 @@
 # AI Chat
 
-A full-stack conversational AI application built with FastAPI and React.
+A full-stack conversational AI application with multi-turn session memory, built with FastAPI and React.
 
-## Projects
-- `ai-chat-api` — Python/FastAPI backend with GPT-4o and session memory
-- `ai-chat-ui` — React frontend with real-time chat interface
+## Architecture
+
+```
+React UI (Vite)          FastAPI Backend              OpenAI
+     │                         │                         │
+     │  POST /chat              │                         │
+     │ ──────────────────────► │                         │
+     │  {session_id, message}  │  chat.completions       │
+     │                         │ ──────────────────────► │
+     │                         │  GPT-4o response        │
+     │  {reply, session_id}    │ ◄────────────────────── │
+     │ ◄────────────────────── │                         │
+```
+
+Session history is maintained in-memory per `session_id`, trimmed to a rolling window of 20 messages to stay within token limits.
 
 ## Tech Stack
-- **Backend:** FastAPI · Python 3.11 · OpenAI GPT-4o · Docker
-- **Frontend:** React · Vite · Axios
 
-## Features
-- Multi-turn conversation with session memory
-- Input validation and error handling
-- Token overflow protection
-- Auto-generated API docs at `/docs`
-- Fully containerized with Docker
+| Layer | Technology |
+|---|---|
+| Backend | FastAPI, Python 3.11, Uvicorn |
+| AI | OpenAI GPT-4o (`gpt-4o`) |
+| Frontend | React 19, Vite, Axios |
+| Infrastructure | Docker, Docker Compose |
 
-## Run Locally
+## Project Structure
+
+```
+ai-chat/
+├── ai-chat-api/
+│   ├── app/
+│   │   ├── main.py                  # FastAPI app, middleware, routes
+│   │   ├── models.py                # Pydantic request/response models
+│   │   ├── config.py                # Model name, history limits, system prompt
+│   │   └── services/
+│   │       └── chat_service.py      # Session management, OpenAI calls
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── requirements.txt
+└── ai-chat-ui/
+    └── src/
+        └── App.jsx                  # Chat UI with useState, axios
+```
+
+## Running Locally
+
+**Prerequisites:** Docker, Node.js, OpenAI API key
 
 **Backend:**
 ```bash
 cd ai-chat-api
-cp .env.example .env  # add your OpenAI API key
-docker-compose up --build
+cp .env.example .env        # paste your OPENAI_API_KEY
+docker compose up --build
 ```
 
 **Frontend:**
@@ -33,5 +64,40 @@ npm install
 npm run dev
 ```
 
-API runs on `http://localhost:8000`
-UI runs on `http://localhost:5173`
+| Service | URL |
+|---|---|
+| API | http://localhost:8000 |
+| Interactive API docs | http://localhost:8000/docs |
+| UI | http://localhost:5173 |
+
+## API Reference
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | Health check |
+| `POST` | `/chat` | Send a message, receive a reply |
+| `DELETE` | `/chat/{session_id}` | Clear a session's history |
+
+**POST /chat — request:**
+```json
+{
+  "session_id": "user-abc123",
+  "message": "Explain how transformers work"
+}
+```
+
+**POST /chat — response:**
+```json
+{
+  "reply": "Transformers are...",
+  "session_id": "user-abc123"
+}
+```
+
+## What This Demonstrates
+
+- **FastAPI** — routing, Pydantic validation with `field_validator`, middleware, HTTPException
+- **Service layer architecture** — business logic isolated from route handlers
+- **OpenAI integration** — chat completions API, multi-turn message history
+- **Session memory** — rolling context window with overflow protection
+- **Dockerized deployment** — backend containerized and served via Uvicorn
