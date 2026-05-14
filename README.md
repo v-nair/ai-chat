@@ -7,7 +7,7 @@ A full-stack conversational AI application with multi-turn session memory, built
 ```
 React UI (Vite)          FastAPI Backend              OpenAI
      │                         │                         │
-     │  POST /chat              │                         │
+     │  POST /chat             │                         │
      │ ──────────────────────► │                         │
      │  {session_id, message}  │  chat.completions       │
      │                         │ ──────────────────────► │
