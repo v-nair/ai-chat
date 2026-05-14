@@ -80,6 +80,32 @@ API available at <http://localhost:8000> · Swagger docs at <http://localhost:80
 }
 ```
 
+## Logic — Pseudocode
+
+```text
+FUNCTION handle_chat(session_id, message):
+
+    IF session_id not in sessions:
+        sessions[session_id] = [SystemMessage("You are a helpful assistant")]
+
+    APPEND HumanMessage(message) to sessions[session_id]
+
+    IF len(sessions[session_id]) > MAX_HISTORY + 1:
+        TRIM to [system_prompt] + last 20 messages   // preserve system prompt always
+
+    response = OpenAI GPT-4o.complete(sessions[session_id])
+
+    APPEND AIMessage(response) to sessions[session_id]
+
+    RETURN response
+
+
+FUNCTION clear_session(session_id):
+    IF session_id not in sessions: RETURN false
+    DELETE sessions[session_id]
+    RETURN true
+```
+
 ## What This Demonstrates
 
 - **FastAPI** — typed routes, Pydantic request/response models, CORS middleware
