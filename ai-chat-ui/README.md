@@ -1,6 +1,12 @@
-# AI Chat UI
+# ai-chat-ui
 
-React frontend for the AI Chat project. Provides a chat bubble interface that communicates with the FastAPI backend over a REST API.
+React frontend for the [AI Chat](../README.md) project. Provides a chat bubble interface that communicates with `ai-chat-api` over a REST API.
+
+## Relationship to Other Services
+
+| Service | Direction | Description |
+| --- | --- | --- |
+| `ai-chat-api` | → calls | Sends `POST /chat` with `session_id` + `message`, receives `reply` |
 
 ## Tech Stack
 

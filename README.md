@@ -4,7 +4,7 @@ A full-stack conversational AI application with multi-turn session memory, built
 
 ## Architecture
 
-```
+```text
 React UI (Vite)          FastAPI Backend              OpenAI
      │                         │                         │
      │  POST /chat             │                         │
@@ -21,7 +21,7 @@ Session history is maintained in-memory per `session_id`, trimmed to a rolling w
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
+| --- | --- |
 | Backend | FastAPI, Python 3.11, Uvicorn |
 | AI | OpenAI GPT-4o (`gpt-4o`) |
 | Frontend | React 19, Vite, Axios |
@@ -29,7 +29,7 @@ Session history is maintained in-memory per `session_id`, trimmed to a rolling w
 
 ## Project Structure
 
-```
+```text
 ai-chat/
 ├── ai-chat-api/
 │   ├── app/
@@ -51,6 +51,7 @@ ai-chat/
 **Prerequisites:** Docker, Node.js, OpenAI API key
 
 **Backend:**
+
 ```bash
 cd ai-chat-api
 cp .env.example .env        # paste your OPENAI_API_KEY
@@ -58,6 +59,7 @@ docker compose up --build
 ```
 
 **Frontend:**
+
 ```bash
 cd ai-chat-ui
 npm install
@@ -65,20 +67,21 @@ npm run dev
 ```
 
 | Service | URL |
-|---|---|
-| API | http://localhost:8000 |
-| Interactive API docs | http://localhost:8000/docs |
-| UI | http://localhost:5173 |
+| --- | --- |
+| API | <http://localhost:8000> |
+| Interactive API docs | <http://localhost:8000/docs> |
+| UI | <http://localhost:5173> |
 
 ## API Reference
 
 | Method | Endpoint | Description |
-|---|---|---|
+| --- | --- | --- |
 | `GET` | `/` | Health check |
 | `POST` | `/chat` | Send a message, receive a reply |
 | `DELETE` | `/chat/{session_id}` | Clear a session's history |
 
 **POST /chat — request:**
+
 ```json
 {
   "session_id": "user-abc123",
@@ -87,6 +90,7 @@ npm run dev
 ```
 
 **POST /chat — response:**
+
 ```json
 {
   "reply": "Transformers are...",

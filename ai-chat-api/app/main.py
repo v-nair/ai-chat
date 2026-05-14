@@ -1,25 +1,35 @@
+import logging
+import os
+from contextlib import asynccontextmanager
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAIError
-from dotenv import load_dotenv
-import logging
-import os
 
 from models import ChatRequest, ChatResponse
-from services.chat_service import send_message, clear_session
+from services.chat_service import clear_session, send_message
 
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-if not os.getenv("OPENAI_API_KEY"):
-    raise RuntimeError("OPENAI_API_KEY is not set in environment variables")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if not os.getenv("OPENAI_API_KEY"):
+        raise RuntimeError("OPENAI_API_KEY is not set in environment variables")
+    logger.info("ai-chat-api ready")
+    yield
+    logger.info("Shutting down ai-chat-api")
+
 
 app = FastAPI(
     title="AI Chat API",
     description="Conversational AI backend with session memory powered by GPT-4o",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

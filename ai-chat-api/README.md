@@ -1,84 +1,49 @@
-# AI Chat API
+# ai-chat-api
 
-Conversational AI backend with multi-turn session memory powered by GPT-4o, built with FastAPI and the OpenAI Python SDK.
+FastAPI backend service for the [AI Chat](../README.md) project. Receives messages from `ai-chat-ui`, maintains per-session conversation history, and calls OpenAI GPT-4o to generate replies.
 
-## Architecture
+## Relationship to Other Services
 
-```text
-React UI
-    │
-    │  POST /chat
-    ▼
-FastAPI (main.py)
-    │
-    ▼
-chat_service.py
-    ├── In-memory session store  { session_id: [messages] }
-    ├── History trimming         (keeps last 20 turns)
-    └── OpenAI client (lazy singleton)
-    │
-    ▼
-OpenAI GPT-4o
-```
+| Service | Direction | Description |
+| --- | --- | --- |
+| `ai-chat-ui` | ← receives requests | UI sends `POST /chat` with `session_id` + `message` |
+| OpenAI API | → calls | Sends full conversation history, receives GPT-4o reply |
 
-## Tech Stack
-
-| Layer | Technology |
-| --- | --- |
-| Framework | FastAPI, Python 3.11 |
-| LLM | OpenAI GPT-4o |
-| OpenAI client | `openai` Python SDK |
-| Infrastructure | Docker, Docker Compose |
-
-## Project Structure
+## Service Structure
 
 ```text
-ai-chat-api/
-├── app/
-│   ├── main.py              # FastAPI app, CORS, routes
-│   ├── models.py            # ChatRequest, ChatResponse (Pydantic)
-│   ├── config.py            # Model name, system prompt, history limit
-│   └── services/
-│       └── chat_service.py  # Session management, OpenAI calls
-├── Dockerfile
-├── docker-compose.yml
-└── requirements.txt
+app/
+├── main.py              # FastAPI app, CORS middleware, route handlers
+├── models.py            # ChatRequest, ChatResponse (Pydantic)
+├── config.py            # MODEL, MAX_HISTORY, SYSTEM_PROMPT constants
+└── services/
+    └── chat_service.py  # Session store, history trimming, OpenAI client
 ```
 
-## Running Locally
+## Configuration
+
+`.env` (copy from `.env.example`):
+
+```text
+OPENAI_API_KEY=sk-...
+```
+
+`config.py` values:
+
+| Constant | Value | Purpose |
+| --- | --- | --- |
+| `MODEL` | `gpt-4o` | OpenAI model used for completions |
+| `MAX_HISTORY` | `20` | Max conversation turns kept per session |
+| `SYSTEM_PROMPT` | `"You are a helpful assistant."` | Initial system instruction |
+
+## Starting This Service
 
 ```bash
-cp .env.example .env   # add your OPENAI_API_KEY
+cp .env.example .env   # add OPENAI_API_KEY
 docker compose up --build
 ```
 
-API available at <http://localhost:8000> · Swagger docs at <http://localhost:8000/docs>
-
-## API Reference
-
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/` | Health check |
-| `POST` | `/chat` | Send a message and receive a reply |
-| `DELETE` | `/chat/{session_id}` | Clear a session's message history |
-
-**POST /chat — request:**
-
-```json
-{
-  "session_id": "user-abc123",
-  "message": "What is the capital of France?"
-}
-```
-
-**POST /chat — response:**
-
-```json
-{
-  "reply": "The capital of France is Paris.",
-  "session_id": "user-abc123"
-}
-```
+Runs on `http://localhost:8000` · Swagger docs at `http://localhost:8000/docs`
 
 ## Logic — Pseudocode
 
@@ -86,7 +51,7 @@ API available at <http://localhost:8000> · Swagger docs at <http://localhost:80
 FUNCTION handle_chat(session_id, message):
 
     IF session_id not in sessions:
-        sessions[session_id] = [SystemMessage("You are a helpful assistant")]
+        sessions[session_id] = [SystemMessage(SYSTEM_PROMPT)]
 
     APPEND HumanMessage(message) to sessions[session_id]
 
@@ -106,10 +71,9 @@ FUNCTION clear_session(session_id):
     RETURN true
 ```
 
-## What This Demonstrates
+## Design Notes
 
-- **FastAPI** — typed routes, Pydantic request/response models, CORS middleware
-- **Session memory** — per-session conversation history stored in memory, trimmed to last 20 turns
-- **Lazy singleton** — OpenAI client initialised once on first use
-- **Service layer** — business logic separated from route handlers
-- **Docker** — containerised with bind-mount for hot reload during development
+- **Lazy singleton** — OpenAI client is instantiated on first use and reused across requests
+- **In-memory store** — sessions live in a plain Python dict; they do not persist across container restarts
+- **History trimming** — always keeps `messages[0]` (the system prompt) and the most recent `MAX_HISTORY` turns
+- **502 on OpenAI error** — `OpenAIError` is caught at the route level and returns a 502 to the UI

@@ -32,6 +32,12 @@ def _trim_history(session_id: str) -> None:
 
 
 def send_message(session_id: str, message: str) -> str:
+    """Append ``message`` to the session history, call GPT-4o, and return the reply.
+
+    Creates the session if it does not exist and trims history to ``MAX_HISTORY``
+    turns while always preserving the system prompt at index 0.
+    Raises ``OpenAIError`` on API failure.
+    """
     _get_or_create_session(session_id)
     _conversations[session_id].append({"role": "user", "content": message})
     _trim_history(session_id)
@@ -55,6 +61,10 @@ def send_message(session_id: str, message: str) -> str:
 
 
 def clear_session(session_id: str) -> bool:
+    """Delete the conversation history for ``session_id``.
+
+    Returns ``True`` if the session existed and was removed, ``False`` otherwise.
+    """
     if session_id not in _conversations:
         return False
     del _conversations[session_id]
