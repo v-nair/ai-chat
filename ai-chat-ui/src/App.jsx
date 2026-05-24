@@ -1,7 +1,14 @@
 import { useState } from "react"
 import axios from "axios"
 
-const SESSION_ID = "user-" + Math.random().toString(36).slice(2, 9)
+const SESSION_STORAGE_KEY = "ai-chat-session-id"
+const SESSION_ID = (() => {
+  const stored = typeof window !== "undefined" ? localStorage.getItem(SESSION_STORAGE_KEY) : null
+  if (stored) return stored
+  const fresh = "user-" + Math.random().toString(36).slice(2, 9)
+  if (typeof window !== "undefined") localStorage.setItem(SESSION_STORAGE_KEY, fresh)
+  return fresh
+})()
 const API_URL = "http://localhost:8000"
 
 export default function App() {
